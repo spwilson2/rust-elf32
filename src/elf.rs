@@ -1,4 +1,5 @@
 use core::mem::transmute_copy;
+use core::slice;
 
 type Elf32_Addr 	= u32;
 type Elf32_Half 	= u16;
@@ -35,13 +36,18 @@ pub struct ElfHeader {
 }
 
 impl ElfHeader {
+
     pub unsafe fn get_header(ptr: *mut ElfHeader) -> Self {
         transmute_copy(&*ptr)
+    }
+
+    pub unsafe fn get_sections_headers(&mut self) -> &'static[SectionHeader] {
+        slice::from_raw_parts(((self) as *mut _) as *mut SectionHeader, self.e_shnum as usize)
     }
 }
 
 #[repr(C)]
-struct SectionHeader {
+pub struct SectionHeader {
     sh_name:        Elf32_Word,
     sh_type:        Elf32_Word,
     sh_flags:       Elf32_Word,
