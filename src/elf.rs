@@ -42,11 +42,15 @@ impl ElfHeader {
     }
 
     pub unsafe fn get_sections_headers(&mut self) -> &'static[SectionHeader] {
-        slice::from_raw_parts(((self) as *mut _) as *mut SectionHeader, self.e_shnum as usize)
+        let self_ptr = (self as *mut _) as usize;
+        slice::from_raw_parts(
+            (self_ptr + self.e_shoff as usize) as *mut SectionHeader,
+            self.e_shnum as usize)
     }
 }
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct SectionHeader {
     sh_name:        Elf32_Word,
     sh_type:        Elf32_Word,
