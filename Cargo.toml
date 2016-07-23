@@ -1,5 +1,5 @@
 [package]
-name = "elf32"
+name = "rust-elf32"
 version = "0.1.0"
 authors = ["Sean Wilson <spwilson27@gmail.com>"]
 
