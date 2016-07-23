@@ -16,7 +16,7 @@ const EM_ARM: Elf32_Half = 0x28 as Elf32_Half;
 const ELFMAG: u32 = 0x7f454C46;
 
 #[repr(C)]
-#[derive(debug)]
+#[derive(Debug)]
 pub struct ElfHeader {
     e_indent:       [uchar; EI_NIDENT as usize],
     e_type:         Elf32_Half,
