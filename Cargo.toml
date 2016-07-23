@@ -1,0 +1,6 @@
+[package]
+name = "elf32"
+version = "0.1.0"
+authors = ["Sean Wilson <spwilson27@gmail.com>"]
+
+[dependencies]
