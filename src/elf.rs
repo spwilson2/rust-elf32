@@ -35,7 +35,21 @@ pub struct ElfHeader {
     e_shstrndx:     Elf32_Half,
 }
 
+const BYTE_MASK: usize = 0xff;
+fn get_byte(val: usize, byte: usize) -> u8 {
+    ((val & (BYTE_MASK << byte)) >> byte) as u8
+}
+
 impl ElfHeader {
+    pub unsafe fn test_valid(&mut self) -> bool {
+        for i in 0..4usize {
+            if !get_byte(ELFMAG as usize, i) == self.e_indent[i] {
+                return false
+            }
+        }
+        true
+    }
+
     pub unsafe fn get_sections_headers(&mut self) -> &'static[SectionHeader] {
         let self_ptr = (self as *mut _) as usize;
         slice::from_raw_parts(
