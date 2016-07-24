@@ -1,4 +1,4 @@
-use core::mem::transmute_copy;
+use core::ptr;
 use core::slice;
 
 type Elf32_Addr 	= u32;
@@ -38,7 +38,7 @@ pub struct ElfHeader {
 impl ElfHeader {
 
     pub unsafe fn get_header(ptr: *mut ElfHeader) -> Self {
-        transmute_copy(&*ptr)
+        ptr::read(ptr)
     }
 
     pub unsafe fn get_sections_headers(&mut self) -> &'static[SectionHeader] {
