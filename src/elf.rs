@@ -36,16 +36,11 @@ pub struct ElfHeader {
 }
 
 impl ElfHeader {
-
-    pub unsafe fn get_header(ptr: *mut ElfHeader) -> Self {
-        ptr::read(ptr)
-    }
-
     pub unsafe fn get_sections_headers(&mut self) -> &'static[SectionHeader] {
         let self_ptr = (self as *mut _) as usize;
         slice::from_raw_parts(
-            (self_ptr + self.e_shoff as usize) as *mut SectionHeader,
-            self.e_shnum as usize)
+                (self_ptr + self.e_shoff as usize) as *mut SectionHeader,
+                self.e_shnum as usize)
     }
 }
 
