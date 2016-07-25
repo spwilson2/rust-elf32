@@ -41,7 +41,7 @@ fn get_byte(val: usize, byte: usize) -> u8 {
 }
 
 impl ElfHeader {
-    pub unsafe fn test_valid(&mut self) -> bool {
+    pub unsafe fn test_valid(&self) -> bool {
         for i in 0..4usize {
             if !get_byte(ELFMAG as usize, i) == self.e_indent[i] {
                 return false
@@ -50,13 +50,23 @@ impl ElfHeader {
         true
     }
 
-    pub unsafe fn get_sections_headers(&mut self) -> &'static[SectionHeader] {
+    pub unsafe fn get_sections_headers<'a>(&'a self) -> &'a [SectionHeader] {
         let self_ptr = (self as *mut _) as usize;
         slice::from_raw_parts(
                 (self_ptr + self.e_shoff as usize) as *mut SectionHeader,
                 self.e_shnum as usize)
     }
+
+    pub unsafe fn get_str_table<'a>(&'a self, sections: &[SectionHeader]) -> &'a [u8] {
+        let str_section = &sections[self.e_shstrndx as usize];
+
+        slice::from_raw_parts(
+            str_section.sh_addr as usize as *mut u8,
+            str_section.sh_size as usize
+        )
+    }
 }
+
 
 #[repr(C)]
 #[derive(Debug)]
