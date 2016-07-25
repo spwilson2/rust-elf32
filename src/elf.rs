@@ -92,6 +92,29 @@ impl<'a> ElfHeadWrapper<'a> {
 
         &sections[self.header.e_shstrndx as usize]
     }
+
+    //TODO: Move into the copy trait?
+    unsafe fn copy(&self, addr: usize) {
+
+        let mut mem_ptr = addr;
+
+        // Copy the header.
+        ptr::copy(self.base_ptr as *mut ElfHeader, addr as *mut _, 1);
+
+        mem_ptr += mem::size_of::<ElfHeader>();
+
+        // Copy the sections.
+        
+        ptr::copy((self.base_ptr + self.header.sh_off as usize) as *mut ElfHeader, mem_ptr as *mut _, self.header.sh_num as usize);
+
+        mem_ptr += mem::size_of::<SectionHeader>() * self.header.sh_num;
+
+        str_table = self.get_str_table(self.get_sections_headers());
+
+        // Copy the strtab.
+        ptr::copy( as *mut ElfHeader, mem_ptr as *mut _, self.header.sh_num as usize);
+        
+    }
 }
 
 
