@@ -80,8 +80,25 @@ impl<'a> ElfHeadWrapper<'a> {
             str_section.sh_size as usize
         )
     }
+
+    pub unsafe fn get_section<'b>(&'b self, section: Section) -> &'b SectionHeader {
+        match section {
+            Section::STRTAB => self.get_section_strtab()
+        }
+    }
+
+    unsafe fn get_section_strtab<'b>(&'b self) -> &'b SectionHeader {
+        let sections = self.get_sections_headers();
+
+        &sections[self.header.e_shstrndx as usize]
+    }
 }
 
+
+#[allow(non_snake_case)]
+pub enum Section {
+    STRTAB
+}
 
 #[repr(C)]
 #[derive(Debug)]
@@ -96,6 +113,10 @@ pub struct SectionHeader {
     sh_info:        Elf32_Word,
     sh_addralign:   Elf32_Word,
     sh_entsize:     Elf32_Word,
+}
+
+impl SectionHeader {
+    pub unsafe fn size(&self) -> usize {self.sh_size as usize}
 }
 
 #[repr(u32)]
