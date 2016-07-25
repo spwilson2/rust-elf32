@@ -40,25 +40,40 @@ fn get_byte(val: usize, byte: usize) -> u8 {
     ((val & (BYTE_MASK << byte)) >> byte) as u8
 }
 
-impl ElfHeader {
+pub struct ElfHeadWrapper<'a> {
+    pub header: &'a mut ElfHeader,
+    pub base_ptr: usize,
+}
+
+impl<'a> ElfHeadWrapper<'a> {
+    //pub unsafe fn new<'a>(ptr: &'a mut ElfHeader) -> &mut Self {
+    pub unsafe fn new(ptr: &'a mut ElfHeader) -> Self {
+
+        let base = ptr as *mut _ as usize;
+
+        ElfHeadWrapper {
+            header: ptr,
+            base_ptr: base,
+        }
+    }
+
     pub unsafe fn test_valid(&self) -> bool {
         for i in 0..4usize {
-            if !get_byte(ELFMAG as usize, i) == self.e_indent[i] {
+            if !get_byte(ELFMAG as usize, i) == self.header.e_indent[i] {
                 return false
             }
         }
         true
     }
 
-    pub unsafe fn get_sections_headers<'a>(&'a self) -> &'a [SectionHeader] {
-        let self_ptr = (self as *mut _) as usize;
+    pub unsafe fn get_sections_headers<'b>(&'b self) -> &'b [SectionHeader] {
         slice::from_raw_parts(
-                (self_ptr + self.e_shoff as usize) as *mut SectionHeader,
-                self.e_shnum as usize)
+                (self.base_ptr + self.header.e_shoff as usize) as *mut SectionHeader,
+                self.header.e_shnum as usize)
     }
 
-    pub unsafe fn get_str_table<'a>(&'a self, sections: &[SectionHeader]) -> &'a [u8] {
-        let str_section = &sections[self.e_shstrndx as usize];
+    pub unsafe fn get_str_table<'b>(&'b self, sections: &[SectionHeader]) -> &'b [u8] {
+        let str_section = &sections[self.header.e_shstrndx as usize];
 
         slice::from_raw_parts(
             str_section.sh_addr as usize as *mut u8,
