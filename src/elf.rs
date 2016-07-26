@@ -77,7 +77,7 @@ impl<'a> ElfHeadWrapper<'a> {
         let str_section = &sections[self.header.e_shstrndx as usize];
 
         slice::from_raw_parts(
-            (str_section.sh_addr as usize + self.base_ptr) as *mut u8,
+            (str_section.sh_offset as usize + self.base_ptr) as *mut u8,
             str_section.sh_size as usize
         )
     }
