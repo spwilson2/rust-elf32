@@ -73,6 +73,12 @@ impl<'a> ElfHeadWrapper<'a> {
                 self.header.e_shnum as usize)
     }
 
+    pub unsafe fn get_sections_headers_mut<'b>(&'b mut self) -> &'b mut [SectionHeader] {
+        slice::from_raw_parts_mut(
+                (self.base_ptr + self.header.e_shoff as usize) as *mut SectionHeader,
+                self.header.e_shnum as usize)
+    }
+
     pub unsafe fn get_str_table<'b>(&'b self, sections: &[SectionHeader]) -> &'b [u8] {
         let str_section = &sections[self.header.e_shstrndx as usize];
 
@@ -119,6 +125,27 @@ impl<'a> ElfHeadWrapper<'a> {
 
         // Copy the strtab.
         ptr::copy(str_table.as_ptr(), mem_ptr as *mut _, str_table.len());
+
+
+        //
+        // Update the strtab section to point to the strtab.
+        //
+        let mut new_header_wrapper = ElfHeadWrapper::new(&mut*(addr as *mut ElfHeader));
+
+        //
+        // NOTE: This breaks the rule of mutablility as we are using this to index into a
+        // mutible child of this. Need to be careful.
+        //
+        let str_tab_idx = new_header_wrapper.header.e_shstrndx as usize;
+
+        let mut new_section_headers = new_header_wrapper.get_sections_headers_mut();
+        let mut new_strtab = new_section_headers
+                                .get_mut(str_tab_idx)
+                                .unwrap();
+
+        let strtab_sh_offset = (mem_ptr - addr) as u32;
+
+        //new_strtab.sh_offset = strtab_sh_offset;
     }
 
     unsafe fn copy_section(&self, section_header: &SectionHeader, new_addr: usize) {
