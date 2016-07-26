@@ -113,7 +113,7 @@ impl<'a> ElfHeadWrapper<'a> {
         // Section headers are now following us.
         let e_shoff = mem_ptr - addr;
 
-        (&mut*(mem_ptr as *mut ElfHeader)).e_shoff = e_shoff as u32;
+        (&mut*(addr as *mut ElfHeader)).e_shoff = e_shoff as u32;
 
         // Copy the section headers.
         for section in self.get_sections_headers() {
@@ -145,7 +145,7 @@ impl<'a> ElfHeadWrapper<'a> {
 
         let strtab_sh_offset = (mem_ptr - addr) as u32;
 
-        //new_strtab.sh_offset = strtab_sh_offset;
+        new_strtab.sh_offset = strtab_sh_offset;
     }
 
     unsafe fn copy_section(&self, section_header: &SectionHeader, new_addr: usize) {
