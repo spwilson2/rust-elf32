@@ -105,7 +105,7 @@ impl<'a> ElfHeadWrapper<'a> {
         mem_ptr += mem::size_of::<ElfHeader>();
 
         // Section headers are now following us.
-        let e_shoff = addr - mem_ptr;
+        let e_shoff = mem_ptr - addr;
 
         (&mut*(mem_ptr as *mut ElfHeader)).e_shoff = e_shoff as u32;
 
