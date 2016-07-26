@@ -1,4 +1,5 @@
 use core::ptr;
+use core::mem;
 use core::slice;
 
 type Elf32_Addr 	= u32;
@@ -76,7 +77,7 @@ impl<'a> ElfHeadWrapper<'a> {
         let str_section = &sections[self.header.e_shstrndx as usize];
 
         slice::from_raw_parts(
-            str_section.sh_addr as usize as *mut u8,
+            (str_section.sh_addr as usize + self.base_ptr) as *mut u8,
             str_section.sh_size as usize
         )
     }
@@ -103,17 +104,15 @@ impl<'a> ElfHeadWrapper<'a> {
 
         mem_ptr += mem::size_of::<ElfHeader>();
 
-        // Copy the sections.
-        
-        ptr::copy((self.base_ptr + self.header.sh_off as usize) as *mut ElfHeader, mem_ptr as *mut _, self.header.sh_num as usize);
+        // Copy the section headers.
+        ptr::copy((self.base_ptr + self.header.e_shoff as usize) as *mut ElfHeader, mem_ptr as *mut _, self.header.e_shnum as usize);
 
-        mem_ptr += mem::size_of::<SectionHeader>() * self.header.sh_num;
+        mem_ptr += mem::size_of::<SectionHeader>() * self.header.e_shnum as usize;
 
-        str_table = self.get_str_table(self.get_sections_headers());
+        let str_table = self.get_str_table(self.get_sections_headers());
 
         // Copy the strtab.
-        ptr::copy( as *mut ElfHeader, mem_ptr as *mut _, self.header.sh_num as usize);
-        
+        ptr::copy(str_table.as_ptr(), mem_ptr as *mut _, str_table.len());
     }
 }
 
@@ -140,6 +139,8 @@ pub struct SectionHeader {
 
 impl SectionHeader {
     pub unsafe fn size(&self) -> usize {self.sh_size as usize}
+    unsafe fn relocate_copy() {
+    }
 }
 
 #[repr(u32)]
