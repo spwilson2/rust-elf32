@@ -95,7 +95,7 @@ impl<'a> ElfHeadWrapper<'a> {
     }
 
     //TODO: Move into the copy trait?
-    unsafe fn copy(&self, addr: usize) {
+    pub unsafe fn copy(&self, addr: usize) {
 
         let mut mem_ptr = addr;
 
@@ -104,15 +104,32 @@ impl<'a> ElfHeadWrapper<'a> {
 
         mem_ptr += mem::size_of::<ElfHeader>();
 
-        // Copy the section headers.
-        ptr::copy((self.base_ptr + self.header.e_shoff as usize) as *mut ElfHeader, mem_ptr as *mut _, self.header.e_shnum as usize);
+        // Section headers are now following us.
+        let e_shoff = addr - mem_ptr;
 
-        mem_ptr += mem::size_of::<SectionHeader>() * self.header.e_shnum as usize;
+        (&mut*(mem_ptr as *mut ElfHeader)).e_shoff = e_shoff as u32;
+
+        // Copy the section headers.
+        for section in self.get_sections_headers() {
+            self.copy_section(section, mem_ptr);
+            mem_ptr += mem::size_of::<SectionHeader>();
+        }
 
         let str_table = self.get_str_table(self.get_sections_headers());
 
         // Copy the strtab.
         ptr::copy(str_table.as_ptr(), mem_ptr as *mut _, str_table.len());
+    }
+
+    unsafe fn copy_section(&self, section_header: &SectionHeader, new_addr: usize) {
+        let new_ptr = new_addr as *mut SectionHeader;
+
+        ptr::copy(section_header as *const SectionHeader, new_ptr, 1);
+
+        // TODO: Fix for relocations that don't move the header past the data.
+        let new_off = 0;
+
+        (&mut*(new_ptr)).sh_offset = new_off;
     }
 }
 
@@ -129,7 +146,7 @@ pub struct SectionHeader {
     sh_type:        Elf32_Word,
     sh_flags:       Elf32_Word,
     sh_addr:        Elf32_Addr,
-    sh_offfset:     Elf32_Off,
+    sh_offset:      Elf32_Off,
     sh_size:        Elf32_Word,
     sh_link:        Elf32_Word,
     sh_info:        Elf32_Word,
@@ -139,8 +156,6 @@ pub struct SectionHeader {
 
 impl SectionHeader {
     pub unsafe fn size(&self) -> usize {self.sh_size as usize}
-    unsafe fn relocate_copy() {
-    }
 }
 
 #[repr(u32)]
